@@ -105,7 +105,7 @@
           }
         }
 
-        var data = y.rest( optionsChainURL ).accept( "text/html" ).get().response;
+        var data = y.rest( optionsChainURL ).timeout(10000).accept( "text/html" ).get().response;
         //y.log(data);
         var refStockPrice = y.xpath(data, "//span[@class='time_rtq_ticker']/span");
         
@@ -151,8 +151,8 @@
         result.appendChild(existingExpirations);
         
         var optionsChain = <options></options>
-        //getOptionsChain();
-        result.appendChild(optionsChainQuery);
+        getOptionsChain();
+        result.appendChild(optionsChain);
         response.object = result;
         ]]>
       </execute>
