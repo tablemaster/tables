@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table xmlns="http://query.yahooapis.com/v1/schema/table.xsd">
+  <meta/>
+  <bindings>
+    <select itemPath="" produces="XML">
+      <urls> <url/> </urls>
+      <inputs>
+        <key id="symbol" type="xs:string" paramType="variable" required="true" />
+        <key id="expiration" type="xs:string" paramType="variable" required="false" />
+      </inputs>
+      <execute>
+        <![CDATA[
+        // pad string with leading char
+        String.prototype.pad = function ( padchar, padlen ) {
+          s = this;
+          while (s.length < padlen) {
+            s = padchar + s;
+          }
+          return s;
+        }
+           
+        String.prototype.trim = function () {
+          var str = this.replace( /^\s\s*/, "" ),
+            ws = /\s/,
+            i = str.length;
+          while ( ws.test( str.charAt( --i ) ) );
+          return str.slice( 0, i + 1 );
+        }
+           
+        String.prototype.toInt = function () {
+          // remove leading zeros - otherwise str can be interpreted as Octal
+          var str = this.replace( /^0+/, '' );
+          // also the thousands comma was causing trouble
+          str = str.replace( /\,/g, '' );
+          return parseInt( str );
+        }
+
+        function getOptionsChain() {
+          // Get the Options Chain for the given symbol from the Options page
+          var results = optionsChainQuery;
+          elements = results.*.length();
+          if ( elements == 0 ) {
+            return false;
+          }
+        
+          var optionElem, strike, optionSymbol, last, change, changeDir;
+          var bid, ask, volume, openInterest;
+
+          for each ( var tr in results ) {
+            strike = tr.td[0].a.strong.text().toString().replace(/\,/g, '');
+            optionSymbol = tr.td[1].a.text();
+            last = tr.td[2].strong.text();
+            change = tr.td[3].span.strong.text();
+            changeDir = tr.td[3].span.img.@alt.toString();
+            bid = tr.td[4].p.text();
+            ask = tr.td[5].p.text();
+            volume = tr.td[6].p.text();
+            openInterest = tr.td[7].p.text().toInt();
+            if ( changeDir.toLowerCase() == "down" ) {
+              change = "-" + change;
+            }
+              
+            optionElem = <option symbol={optionSymbol}></option>;
+            optionElem.appendChild(<strike>{strike}</strike>);
+            optionElem.appendChild(<last>{last}</last>);
+            optionElem.appendChild(<change>{change}</change>);
+            optionElem.appendChild(<bid>{bid}</bid>);
+            optionElem.appendChild(<ask>{ask}</ask>);
+            optionElem.appendChild(<volume>{volume}</volume>);
+            optionElem.appendChild(<openInterest>{openInterest}</openInterest>);
+            
+            optionsChain.appendChild( optionElem );
+          }
+            
+          return true;
+        }
+
+        function getExpiration() {
+          var results = expiresQuery;
+          y.log( "results.length(): " + results.length() );
+          elements = results.*.length();
+          if ( elements == 0 ) {
+            y.log( "no elements" );
+            return "";
+          }
+                
+          var dateRegEx = /.*([\d]{2})\,\s+?[\d]{4}/g;
+          var dateRes = dateRegEx.exec( results[0] );
+          var dd;
+          if ( dateRes != null && dateRes[ 1 ] != null ) {
+            dd = dateRes[ 1 ];
+          }
+                
+          return dd;
+        }
+   
+        // Queue the query       
+        var optionsChainURL = "http://finance.yahoo.com/q/op?s=" + symbol;
+        var queryHasExpiration = false;
+        if ( expiration != null ) {
+          var expPattern = /^[\d]{4}\-[\d]{2}$/;
+          if ( expPattern.test( expiration ) ) {
+            optionsChainURL += "&m=" + expiration;
+            queryHasExpiration = true;
+          }
+        }
+
+        var data = y.rest( optionsChainURL ).accept( "text/html" ).get().response;
+        //y.log(data);
+        var refStockPrice = y.xpath(data, "//span[@class='time_rtq_ticker']/span");
+        
+        var timeStamp = y.xpath(data, "//span[@class='time_rtq'][1]/span/span");
+        if(timeStamp === null || ("" + timeStamp.text()).length === 0)
+          timeStamp = y.xpath(data, "//span[@class='time_rtq'][1]/span");
+        // The timestamp for the after-hours price quote
+        var timeStampAH = y.xpath(data, "//span[@class='time_rtq'][2]/span");
+        
+        // The DOM structure of the HTML file differs greatly based on the file's precise
+        // origin. For example, YQL appears to run "HTML Tidy for Java (vers. 26 Sep 2004)"
+        // that places the list of expirations under the 'yfnc_modtitle1' table.
+        var existingExpirationsQuery = y.xpath(data,
+            "//table[@class='yfnc_modtitle1']//tr/td/p[1]/*");
+        y.log(existingExpirationsQuery.*.length() + " existing expirations.");
+        var existingExpirations = <expirations></expirations>;
+        var children = existingExpirationsQuery.children();
+        y.log(children.length() + " children");
+        for ( var e in children ) {
+          y.log(e + ": " + children[e]);
+          existingExpirations.appendChild(<expiration>{children[e]}</expiration>);
+        }
+        
+        var optionsChainQuery = y.xpath(data,
+          "//table[@class='yfnc_datamodoutline1']/tr/td/table/tr[td[@class='yfnc_h' or "
+          +  "@class='yfnc_tabledata1']]"
+        );
+      
+        var expiresQuery = y.xpath(data,
+          "//table[@class='yfnc_mod_table_title1']//tr/td[last()]"
+        );
+
+        var expiryDay = getExpiration(), expDate = expiration;
+        if ( queryHasExpiration == true ) {
+          if ( expiryDay != null && expiryDay != "" ) {
+            expDate += "-" + expiryDay;
+            y.log("expDate: " + expDate);
+          }
+          // optionsChain = <optionsChain symbol={symbol} expiration={expDate}></optionsChain>;
+        }
+        
+        var result = <optionsChain symbol={symbol} price={refStockPrice.text()} timeStamp={timeStamp.text()} timeStampAH={timeStampAH.text()}></optionsChain>;
+        result.appendChild(existingExpirations);
+        
+        var optionsChain = <options></options>
+        getOptionsChain();
+        result.appendChild(optionsChain);
+        response.object = result;
+        ]]>
+      </execute>
+    </select>
+  </bindings>
+</table>
