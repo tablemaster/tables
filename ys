@@ -12,7 +12,8 @@
         var url = "http://d.yimg.com/autoc.finance.yahoo.com/autoc?query="
           + encodeURIComponent(query)
           + "&callback=YAHOO.Finance.SymbolSuggest.ssCallback";
-        response.object = y.rest(url).timeout(10000).accept("text/html").get().response;
+        var data = y.rest(url).timeout(10000).accept("text/html").get().response;
+        response.object = y.xpath(data, "//p");
         ]]>
       </execute>
     </select>
