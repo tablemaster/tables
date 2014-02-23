@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table xmlns="http://query.yahooapis.com/v1/schema/table.xsd">
+  <meta/>
+  <bindings>
+    <select itemPath="" produces="XML">
+      <urls> <url/> </urls>
+      <inputs>
+        <key id="query" type="xs:string" paramType="variable" required="true" />
+      </inputs>
+      <execute>
+        <![CDATA[
+        var url = "http://d.yimg.com/autoc.finance.yahoo.com/autoc?query="
+          + encodeURIComponent(query)
+          + "&callback=YAHOO.Finance.SymbolSuggest.ssCallback";
+        response.object = y.rest(url).timeout(10000).accept("text/html").get().response;
+        ]]>
+      </execute>
+    </select>
+  </bindings>
+</table>
