@@ -13,8 +13,8 @@
           + encodeURIComponent(query)
           + "&callback=YAHOO.Finance.SymbolSuggest.ssCallback";
         var data = y.rest(url).timeout(10000).accept("text/html").get().response;
-        y.log(data);
-        response.object = y.xpath(data, "//p");
+        // y.log(data);
+        response.object = y.xpath(data, "//p").text();
         ]]>
       </execute>
     </select>
