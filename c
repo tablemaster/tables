@@ -16,7 +16,7 @@
 // * Adding Referer header.
 // * Form input fields with type "image" or "reset" are not included in the
 //   submission via POST
-// * Make all y.rest(...) calls time out after 15 seconds (15000 ms)
+// * Make all y.rest(...) calls time out after 30 seconds (30000 ms)
 
 var DEBUG_IS_LIKE_ARRAY = false, DEBUG_COOKIES = false, DEBUG_REDIRECT = false;
 var DEBUG_SUBMIT = false, DEBUG = false;
@@ -86,7 +86,7 @@ function handleRedirect(request) {
     // "/delayedQuote/QuoteData.dat"; the host is implied to be null, hence I
     // have to insert it in the front.
     request = y.rest("http://www.cboe.com" + request.headers.location)
-      .timeout(15000).accept("text/html");
+      .timeout(30000).accept("text/html");
     request = request.header("Referer", "http://www.cboe.com/delayedQuote/QuoteTableDownload.aspx");
     if(DEBUG_REDIRECT) { y.log(request.url); y.log("Redirect: 5"); }
     
@@ -110,7 +110,7 @@ function handleRedirect(request) {
   return request;
 }
 
-var request = y.rest(url).timeout(15000).followRedirects(false).accept("text/html").get();
+var request = y.rest(url).timeout(30000).followRedirects(false).accept("text/html").get();
 request = handleRedirect(request);
 var headers = request.headers;
 if(DEBUG) y.log(request.response);
@@ -173,7 +173,7 @@ if (!action.match(/^https?:\/\//)) {
 var method = form.@method.toString().toLowerCase();
 
 var params = "";
-var submit = y.rest(action).timeout(15000).accept("text/html").followRedirects(false);
+var submit = y.rest(action).timeout(30000).accept("text/html").followRedirects(false);
 if (cookie != "") {
   submit = submit.header('Cookie', cookie);
 }
