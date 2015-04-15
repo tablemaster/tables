@@ -16,7 +16,7 @@
         //y.log(data);
         var justJson = y.xpath(data, "//body");
         //y.log(justJson);
-        response.object = <data>{justJson}</data>;
+        response.object = <data>{justJson.text()}</data>;
         ]]>
       </execute>
     </select>
