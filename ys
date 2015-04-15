@@ -15,8 +15,8 @@
         var data = y.rest(url).timeout(10000).accept("text/html").get().response;
         //y.log(data);
         var justJson = y.xpath(data, "//body");
-        y.log(justJson);
-        //response.object = <data>{justJson}</data>;
+        //y.log(justJson);
+        response.object = <data>{justJson}</data>;
         ]]>
       </execute>
     </select>
