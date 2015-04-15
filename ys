@@ -13,9 +13,9 @@
           + encodeURIComponent(query)
           + "&callback=YAHOO.Finance.SymbolSuggest.ssCallback";
         var data = y.rest(url).timeout(10000).accept("text/html").get().response;
-        //y.log(data);
+        y.log(data);
         var justJson = y.xpath(data, "//p");
-        //y.log(justJson);
+        y.log(justJson);
         response.object = <data>{justJson.text()}</data>;
         ]]>
       </execute>
